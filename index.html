@@ -3,176 +3,378 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>harm this fish!</title>
+    <title>Fish - Cooking Saga</title>
+        <!-- you can run this perfectly fine on a server, just leave this in here to show thanks to @35socks on github for coding it for any of the nerds that wanna look at the code -->
     <style>
         body {
-            font-family: Arial, sans-serif;
-            text-align: center;
-            background-color: #fff9fd;
             margin: 0;
+            background-color: #fff9fd;
+            overflow: hidden;
+            font-family: Arial, sans-serif;
         }
 
-        .container {
+        .game-container {
             position: relative;
             width: 100%;
             height: 100vh;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
         }
 
-        .title {
-            max-width: 600px;
+        .background {
+            width: 100%;
+            height: 100%;
+            position: absolute;
+            object-fit: cover;
+            z-index: -1;
         }
 
-        button {
-            padding: 10px 20px;
-            font-size: 18px;
-            margin-top: 20px;
-            cursor: pointer;
+        .countertop {
+            position: relative;
+            top: 50%;
+            transform: translateY(-50%);
         }
 
-        .hidden {
-            display: none;
+        .countertop-image {
+            width: 100%;
+            pointer-events: none;
         }
 
-.health-bar img {
-    width: 100%; 
-    max-width: 500px; 
-}
+        .cooker, .fishstation {
+            position: absolute;
+        }
 
-@media (max-width: 600px) {
-    .health-bar img {
-        width: 80%; 
-        max-width: 400px; 
-    }
-}
+        .cooker {
+            bottom: 30px;
+            left: 30px;
+        }
 
+        .fishstation {
+            bottom: 30px;
+            right: 30px;
+        }
 
         .fish {
-            max-width: 500px; 
-            cursor: pointer;
-            position: relative;
-            transition: transform 0.3s ease; 
-            user-select: none;
-        }
-
-        .fish-hit {
-            transform: rotate(15deg); 
-        }
-
-        .damage-indicator {
+            width: 80px;
+            height: 80px;
+            background-image: url('assets/fish.png');
+            background-size: cover;
             position: absolute;
+            cursor: pointer;
+            display: none;
+            z-index: 1000;
+        }
+
+        .customer {
+            position: absolute;
+            right: -150px;
+            top: 40%;
+            transform: translateY(-50%);
+            transition: right 1s;
+            display: flex;
+            align-items: flex-start;
+            justify-content: center;
+            z-index: 2;
+        }
+
+        .speech-bubble {
+            background: white;
+            border: 1px solid black;
+            border-radius: 10px;
+            padding: 10px;
+            position: relative;
+            z-index: 3;
+        }
+
+        .timer {
+            position: absolute;
+            top: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 20px;
+            font-weight: bold;
             color: red;
+            z-index: 4;
+        }
+
+        .cooking-bar {
+            position: absolute;
+            top: 40px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 100px;
+            height: 10px;
+            background-color: #ddd;
+            border-radius: 5px;
+            overflow: hidden;
+            z-index: 4;
+        }
+
+        .cooking-progress {
+            width: 0%;
+            height: 100%;
+            background-color: #4CAF50;
+            transition: width 1s linear;
+        }
+
+        .score {
+            position: absolute;
+            top: 20px;
+            left: 20px;
             font-size: 24px;
             font-weight: bold;
-            opacity: 1;
-            user-select: none; 
-            transition: opacity 2s ease-out;
+            z-index: 5;
         }
 
-        #play-again {
+        .explosion {
+            position: absolute;
+            width: 100px;
+            height: 100px;
+            background-image: url('assets/explosion.png');
+            background-size: cover;
             display: none;
-            margin-top: 20px;
+            z-index: 1000;
+        }
+
+        .instructions {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: rgba(255, 255, 255, 0.9);
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            z-index: 1001;
+        }
+
+        .instructions button {
+            margin-top: 10px;
+            padding: 5px 10px;
+            cursor: pointer;
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <img id="title-image" src="/assets/title.png" alt="Game Title" class="title">
-        <button id="start-btn">Start Game</button>
-
-        <div id="game" class="hidden">
-            <div class="health-bar">
-                <img id="health-image" src="/assets/fishhealth7.png" alt="Fish Health">
-            </div>
-            <img id="fish" src="/assets/fish.png" alt="Fish" class="fish">
+    <div class="game-container">
+        <img src="assets/insideofrestaraunt.png" alt="Restaurant Background" class="background">
+        <div class="countertop">
+            <img src="assets/blank-countertop.png" alt="Countertop" class="countertop-image">
+            <img src="assets/cooker.png" alt="Cooker" class="cooker" id="cooker">
+            <img src="assets/fishstation.png" alt="Fish Station" class="fishstation" id="fishstation">
+            <div class="fish" id="fish"></div>
         </div>
-
-        <button id="play-again">Play Again?</button>
+        <div class="customer" id="customer">
+            <img src="assets/customer.png" alt="Customer">
+            <div class="speech-bubble">
+                <p id="customer-order">hi me want salmon</p>
+            </div>
+        </div>
+        <div class="timer" id="order-timer">30</div>
+        <div class="cooking-bar">
+            <div class="cooking-progress" id="cooking-progress"></div>
+        </div>
+        <div class="score" id="score">$0</div>
+        <div class="explosion" id="explosion"></div>
+        <div class="instructions" id="instructions">
+            <h2>How to Play</h2>
+            <p>1. Click the fish board to get a bit of salmon</p>
+            <p>2. Drag the salmon to the cooker</p>
+            <p>3. Wait for it to cook (the bar below the timer is your cooking progress)</p>
+            <p>4. Drag the cooked salmon to the customer</p>
+            <button onclick="hideInstructions()">Start Game</button>
+        </div>
     </div>
 
     <script>
-        const startButton = document.getElementById('start-btn');
-        const titleImage = document.getElementById('title-image');
-        const gameContainer = document.getElementById('game');
-        const playAgainButton = document.getElementById('play-again');
+        // haha sorry but fuck you mobile users!
+if ('ontouchstart' in window) { alert('This game is only playable on PC.'); window.location.href = 'https://sacrificethefish.co.uk'; }
+
+
         const fishElement = document.getElementById('fish');
-        const healthImage = document.getElementById('health-image');
-        let currentHealth = 7;
-        let clicksRemaining = getRandomClicks();
+        const customerElement = document.getElementById('customer');
+        const orderTimerElement = document.getElementById('order-timer');
+        const scoreElement = document.getElementById('score');
+        const cookerElement = document.getElementById('cooker');
+        const fishstationElement = document.getElementById('fishstation');
+        const customerOrderElement = document.getElementById('customer-order');
+        const cookingProgressElement = document.getElementById('cooking-progress');
+        const explosionElement = document.getElementById('explosion');
+        const instructionsElement = document.getElementById('instructions');
 
-        // Start the game
-        startButton.addEventListener('click', function() {
-            gameContainer.classList.remove('hidden');
-            startButton.style.display = 'none';  
-            titleImage.style.display = 'none';   
-        });
+        let orderTime = 30;
+        let score = 0;
+        let orderInterval;
+        let cookTime = 10;
+        let isCooking = false;
+        let isDragging = false;
 
-        playAgainButton.addEventListener('click', function() {
-            resetGame();
-        });
+        function hideInstructions() {
+            instructionsElement.style.display = 'none';
+            startCustomerOrder();
+        }
 
-        fishElement.addEventListener('click', function(event) {
-            clicksRemaining--;
+        const customerImages = [
+    'assets/customer.png',
+    'assets/customer3.png'
+];
 
-            showDamageIndicator(event.clientX, event.clientY);
-            fishElement.classList.add('fish-hit');  
 
-            if (clicksRemaining <= 0) {
-                currentHealth = Math.max(0, currentHealth - 1);  
-                updateHealthBar(currentHealth);
-                clicksRemaining = getRandomClicks();  
-            }
+function startOrderTimer() {
+    clearInterval(orderInterval);
+    
+    orderInterval = setInterval(() => {
+        orderTime--;
+        orderTimerElement.textContent = orderTime;
 
-            fishElement.src = '/assets/fishharmed.png';
+        if (orderTime <= 0) {
+            clearInterval(orderInterval);
+            resetOrder(); 
+        }
+    }, 1000); 
+}
+
+function startCustomerOrder() {
+    const randomIndex = Math.floor(Math.random() * customerImages.length);
+    customerElement.querySelector('img').src = customerImages[randomIndex]; 
+
+    customerElement.style.right = "30%";
+    orderTime = 30; 
+    orderTimerElement.textContent = orderTime; 
+    startOrderTimer(); 
+}
+
+
+function resetOrder() {
+    if (!isCooking) { 
+        customerOrderElement.textContent = "FUCK YOU"; 
+        setTimeout(() => {
+            customerElement.style.right = "-250px"; 
             setTimeout(() => {
-                fishElement.src = currentHealth > 0 ? '/assets/fish.png' : '/assets/fishdead.png'; 
-                fishElement.classList.remove('fish-hit');  
-            }, 300);  
+                customerOrderElement.textContent = "mmghmmm i want...... salmon";
+            }, 1000); 
+        }, 1000); 
+    } else {
+        customerElement.style.right = "-150px"; 
+    }
 
-            if (currentHealth === 0) {
-                showPlayAgain();
+    fishElement.style.display = "none";
+    isCooking = false;
+    cookingProgressElement.style.width = "0%";
+    setTimeout(startCustomerOrder, 2000);
+}
+
+
+
+function completeOrder() {
+    score += 10;
+    scoreElement.textContent = `$${score}`;
+    explodeCustomer();
+}
+
+function explodeCustomer() {
+    explosionElement.style.display = "block";
+    explosionElement.style.left = `${customerElement.offsetLeft}px`;
+    explosionElement.style.top = `${customerElement.offsetTop}px`;
+    setTimeout(() => {
+        explosionElement.style.display = "none";
+        customerOrderElement.textContent = "fank yew";
+        resetOrderWithDelay(); 
+    }, 1000);
+}
+
+function resetOrderWithDelay() {
+    customerElement.style.right = "-250px"; 
+
+    setTimeout(() => {
+        customerOrderElement.textContent = "sal..mon pleas";
+        fishElement.style.display = "none";
+        isCooking = false;
+        cookingProgressElement.style.width = "0%";
+        setTimeout(startCustomerOrder, 2000);
+    }, 1000); 
+}
+
+
+
+
+        function startCooking() {
+            if (isCooking) return;
+            isCooking = true;
+            cookTime = 10;
+            const cookInterval = setInterval(() => {
+                if (cookTime > 0) {
+                    cookTime--;
+                    cookingProgressElement.style.width = `${(10 - cookTime) * 10}%`;
+                } else {
+                    clearInterval(cookInterval);
+                    customerOrderElement.textContent = "My fish is ready!";
+                    isCooking = false;
+                    fishElement.style.display = "block";
+                    fishElement.style.left = `${cookerElement.offsetLeft}px`;
+                    fishElement.style.top = `${cookerElement.offsetTop}px`;
+                }
+            }, 1000);
+        }
+
+        function dragElement(element) {
+            let pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
+            element.onmousedown = dragMouseDown;
+
+            function dragMouseDown(e) {
+                e.preventDefault();
+                pos3 = e.clientX;
+                pos4 = e.clientY;
+                document.onmouseup = closeDragElement;
+                document.onmousemove = elementDrag;
+                isDragging = true;
+            }
+
+            function elementDrag(e) {
+                e.preventDefault();
+                pos1 = pos3 - e.clientX;
+                pos2 = pos4 - e.clientY;
+                pos3 = e.clientX;
+                pos4 = e.clientY;
+                element.style.top = (element.offsetTop - pos2) + "px";
+                element.style.left = (element.offsetLeft - pos1) + "px";
+            }
+
+            function closeDragElement() {
+                document.onmouseup = null;
+                document.onmousemove = null;
+                isDragging = false;
+                checkCollision(element);
+            }
+        }
+
+        function checkCollision(element) {
+            const rect1 = element.getBoundingClientRect();
+            const rect2 = cookerElement.getBoundingClientRect();
+            const rect3 = customerElement.getBoundingClientRect();
+
+            if (isColliding(rect1, rect2) && !isCooking) {
+                startCooking();
+            } else if (isColliding(rect1, rect3) && !isCooking) {
+                completeOrder();
+            }
+        }
+
+        function isColliding(rect1, rect2) {
+            return !(rect1.right < rect2.left || 
+                     rect1.left > rect2.right || 
+                     rect1.bottom < rect2.top || 
+                     rect1.top > rect2.bottom);
+        }
+
+        fishstationElement.addEventListener('click', (event) => {
+            if (!isDragging && !isCooking) {
+                fishElement.style.display = "block";
+                fishElement.style.left = `${event.clientX - 25}px`;
+                fishElement.style.top = `${event.clientY - 25}px`;
+                dragElement(fishElement);
             }
         });
 
-        function getRandomClicks() {
-            return Math.floor(Math.random() * 5) + 3;  
-        }
-
-        function updateHealthBar(health) {
-            if (health >= 0 && health <= 7) {
-                healthImage.src = `/assets/fishhealth${health}.png`;
-            }
-        }
-
-        function showDamageIndicator(x, y) {
-            const damage = `-${Math.floor(Math.random() * 2) + 3}!`;  // damage indicator
-            const indicator = document.createElement('div');
-            indicator.textContent = damage;
-            indicator.classList.add('damage-indicator');
-            indicator.style.left = `${x}px`;
-            indicator.style.top = `${y}px`;
-            document.body.appendChild(indicator);
-
-            setTimeout(() => {
-                indicator.style.opacity = '0';  
-                setTimeout(() => indicator.remove(), 2000);  
-            }, 2000);
-        }
-
-        function showPlayAgain() {
-            playAgainButton.style.display = 'block';  
-        }
-
-        function resetGame() {
-            currentHealth = 7;
-            healthImage.src = '/assets/fishhealth7.png';  // Reset health bar
-            fishElement.src = '/assets/fish.png';  // Reset fish image
-            playAgainButton.style.display = 'none';  // Hide "Play again?" button
-            clicksRemaining = getRandomClicks();  // Reset random clicks
-        }
+        dragElement(fishElement);
     </script>
 </body>
 </html>
